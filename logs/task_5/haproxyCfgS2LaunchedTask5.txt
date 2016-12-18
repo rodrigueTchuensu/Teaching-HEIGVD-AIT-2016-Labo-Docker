@@ -108,6 +108,10 @@ backend nodes
     # http://cbonte.github.io/haproxy-dconv/configuration-1.5.html#4-server
     # HANDLEBARS START
     
+    server 1a8c1e1a3595 172.18.0.3:3000 check
+    
+    server 74bf57fb567c 172.18.0.4:3000 check
+    
     # HANDLEBARS END
 
 # Other links you will need later for this lab
