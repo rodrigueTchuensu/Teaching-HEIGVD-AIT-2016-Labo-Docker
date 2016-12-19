@@ -2,7 +2,7 @@
 FROM node:0.12.2-wheezy
 
 # TODO: [GEN] Replace with your name and email
-MAINTAINER Laurent Prevost <laurent.prevost@heig-vd.ch>
+MAINTAINER rodrigue Tchuensu && Pascal Sekley <rodrigue.tchuensupouopse@heig-vd.ch>
 
 # Install the required tools to run our webapp and some utils
 RUN apt-get update && apt-get -y install wget curl vim && npm install -g bower

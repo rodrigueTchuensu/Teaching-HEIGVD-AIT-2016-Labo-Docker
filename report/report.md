@@ -25,8 +25,13 @@ Date: 2016-02-26
 
 5. [*M5*]It is not possible to run more than one process in a container with our current solution, because the app was develope to suite the docker tenet i.e one process per container philosophy. We could use a process supervisor to achieve the goal.
 
-6. [*M6*]
+6. [*M6*]We could use a template engine to overcome this problem such that when there is a new node that in the cluster or when a node leaves the cluster ha proxy configuration file is updated automatically.
 
+Take a screenshot of the stats page of HAProxy at http://192.168.42.42:1936. You should see your backend nodes.  
+![image](task0_1.PNG)   
+
+Give the URL of your repository URL in the lab report.   
+[url to our repos](https://github.com/rodrigueTchuensu/Teaching-HEIGVD-AIT-2016-Labo-Docker)
 
 
 ##Task 1: Add a process supervisor to run several processes
@@ -48,7 +53,8 @@ We install a process supervisor to enable us deviate from the classical use of d
 
 
 2. Give the answer to the question about the existing problem with the current solution.  
-**Answer:** In our solution all the nodes join the cluster through the ha node, this does not suite the serf approach, because according to the serf formalism a node should get to the cluster through any other node that is already part of the cluster. It could happen that the ha node is not up this means the other nodes will be able to get to the cluster which is not what we want. ....
+**Answer:** In our solution all the nodes join the cluster through the ha node, this does not suite the serf approach, because according to the serf formalism a node should get to the cluster through any other node that is already part of the cluster. It could happen that the ha node is not up this means the other nodes will be able to get to the cluster which is not what we want.
+We could have a special node that runs the serf agent and creates the cluster, by so doing the ha node and the webapps nodes will join to this cluster. Hence if the ha node goes down the cluster still exist. 
 
 
 3. Give an explanation on how Serf is working. Read the official website to get more details about the GOSSIP protocol used in Serf. Try to find other solutions that can be used to solve similar situations where we need some auto-discovery mechanism.  
@@ -73,7 +79,8 @@ we could also use any of these tools ZooKeeper, doozerd and etcd to reach to a s
 
 ##Task 4: Use a template engine to easily generate configuration files    
 1. You probably noticed when we added xz-utils, we have to rebuild the whole image which took some time. What can we do to mitigate that?   
-**Answer:** We cool make use of a migration tool that will allow us to migrate existing images before upgrading the Docker daemon. By so doing the upgraded Docker daemons will not need to perform the migration in-band and therefore avoids any associated downtime. This tool also provide means to manually migrate existing   
+**Answer:** Images are built following a layering principle and each layer is cached in case it could be used to rebuild the image. As docker is processing our Dockerfile to determine wether a particular image layer is already cached, it checks the instruction being executed and the parent image. So when it meets the RUN instruction to which we have appended the *xz-utils* install it considers there is no istruction match from the cache hence from this point it starts rebuilding the image.
+So to avoid rebuilding the entire image we propose to add the istruction for installing the xz-util at the end of the docker file just before the  ENTRYPOINT istruction.     
 
 - Take a look at the Docker documentation on image layers. Tell us about the pros and cons to merge as much as possible of the command. In other words, compare:   
  
@@ -94,7 +101,7 @@ Each of this approaches have their advantages and disadvantages. According to th
 [another article on squashing images](http://jasonwilder.com/blog/2014/08/19/squashing-docker-images/)
 
 2. Propose a different approach to architecture our images to be able to reuse as much as possible what we have done. Your proposition should also try to avoid as much as possible repetitions between your images.
-**Answer:**  
+**Answer:**To reuse as much as possible whet we have done, we propose to add the `RUN apt-get update && apt-get xz-util` istruction for installing the xz-util at the end of the docker file just before the  ENTRYPOINT istruction.   
 
 3. Provide the `/tmp/haproxy.cfg` file generated in the `ha` container
    after each step.  Place the output into the `logs` folder like you
@@ -114,7 +121,9 @@ Each of this approaches have their advantages and disadvantages. According to th
       
    
 4. Based on the three output files you have collected, what can you
-   say about the way we generate it? What is the problem if any?   
+   say about the way we generate it? What is the problem if any? 
+   **Answer:** We notice that when a new node joins the cluster, the template is called and the container  name/id is inserted in place of the $HOSTNAME as well as the container ip is inserted in place of the $HOSTIP.
+   The problem here is that for each new node that joins the cluster the haproxy.cfg file is overwritten, it would have been better if it were appended. with this solution we can not identify all the nodes that are related to the load balancer through the configuration file.
    
 
 ##Task 5: Generate a new load balancer configuration when membership changes
@@ -164,4 +173,6 @@ Each of this approaches have their advantages and disadvantages. According to th
    
 2. Give your own feelings about the final solution. Propose
    improvements or ways to do the things differently. If any, provide
-   references to your readings for the improvements.
+   references to your readings for the improvements.  
+   I beleive that this solution will certainly enable us to scale our infrastructure to meet the needs of our clients. we could improve it by making the load balancer redondant, having two or more ha nodes will prevent us from having service failure due to load balancer failure. it will also be an improvement if the launching or shorting down of the webapps could be done automatically when need arises without the intervention of the system administrator.    
+   [reference 1](https://cloud.google.com/solutions/autoscaled-load-balancing-using-haproxy-and-consul-on-compute-engine)
